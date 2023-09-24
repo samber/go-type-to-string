@@ -1,4 +1,4 @@
-package gotypetostring
+package typetostring
 
 import (
 	"fmt"
