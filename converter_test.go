@@ -1,6 +1,7 @@
 package typetostring
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -149,4 +150,24 @@ func TestGetType(t *testing.T) {
 	// all mixed
 	name = GetType[[]chan *[]*map[*testStruct][]map[chan int]*map[testInterface]func(int, string) bool]()
 	is.Equal("[]chan *[]*map[*github.com/samber/go-type-to-string.testStruct][]map[chan int]*map[github.com/samber/go-type-to-string.testInterface]func(int, string) bool", name)
+}
+
+func TestGetReflectValueType(t *testing.T) {
+	is := assert.New(t)
+
+	type testStruct struct{}          //nolint:unused
+	type testInterface interface{}    //nolint:unused
+	type testGen[T any] struct{ t T } //nolint:unused
+
+	// random tests
+	name := GetReflectValueType(reflect.ValueOf(42))
+	is.Equal("int", name)
+	name = GetType[[]int]()
+	is.Equal("[]int", name)
+	name = GetReflectValueType(reflect.ValueOf(testStruct{}))
+	is.Equal("github.com/samber/go-type-to-string.testStruct", name)
+	name = GetReflectValueType(reflect.ValueOf(testFunc2))
+	is.Equal("func(string, assert.TestingT) bool", name)
+
+	// @TODO: missing tests
 }

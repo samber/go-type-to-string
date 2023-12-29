@@ -20,6 +20,14 @@ func GetValueType[T any](t T) string {
 	return getType(typeOfT)
 }
 
+func GetReflectType(typeOfT reflect.Type) string {
+	return getType(typeOfT)
+}
+
+func GetReflectValueType(v reflect.Value) string {
+	return GetReflectType(v.Type())
+}
+
 // Replace output when given type is `any` or `interface{}`, but not a custom interface.
 func getInterfaceType(typeOfT reflect.Type) string {
 	t := getType(typeOfT)
