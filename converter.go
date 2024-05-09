@@ -40,15 +40,16 @@ func getInterfaceType(typeOfT reflect.Type) string {
 // getType generates a service name from a type.
 // It returns a string like "*[]*github.com/samber/example.test".
 func getType(typeOfT reflect.Type) string {
-	if typeOfT.Kind() == reflect.Pointer {
+	switch typeOfT.Kind() {
+	case reflect.Pointer:
 		return "*" + getType(typeOfT.Elem())
-	} else if typeOfT.Kind() == reflect.Slice || typeOfT.Kind() == reflect.Array {
+	case reflect.Slice, reflect.Array:
 		return "[]" + getType(typeOfT.Elem())
-	} else if typeOfT.Kind() == reflect.Map {
+	case reflect.Map:
 		key := getType(typeOfT.Key())
 		value := getType(typeOfT.Elem())
 		return fmt.Sprintf("map[%s]%s", key, value)
-	} else if typeOfT.Kind() == reflect.Chan {
+	case reflect.Chan:
 		var prefix string
 
 		switch typeOfT.ChanDir() {
@@ -61,7 +62,7 @@ func getType(typeOfT reflect.Type) string {
 		}
 
 		return fmt.Sprintf("%s %s", prefix, getType(typeOfT.Elem()))
-	} else if typeOfT.Kind() == reflect.Func {
+	case reflect.Func:
 		// @TODO: handle arguments and returned types recursively
 		return typeOfT.String()
 	}
