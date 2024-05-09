@@ -11,13 +11,7 @@ func GetType[T any]() string {
 }
 
 func GetValueType[T any](t T) string {
-	typeOfT := reflect.TypeOf(t)
-
-	if typeOfT == nil {
-		return getInterfaceType(reflect.TypeOf(&t))
-	}
-
-	return getType(typeOfT)
+	return getType(reflect.TypeOf(&t).Elem())
 }
 
 func GetReflectType(typeOfT reflect.Type) string {
@@ -26,15 +20,6 @@ func GetReflectType(typeOfT reflect.Type) string {
 
 func GetReflectValueType(v reflect.Value) string {
 	return GetReflectType(v.Type())
-}
-
-// Replace output when given type is `any` or `interface{}`, but not a custom interface.
-func getInterfaceType(typeOfT reflect.Type) string {
-	t := getType(typeOfT)
-	if t == "*interface {}" {
-		return "interface {}"
-	}
-	return t
 }
 
 // getType generates a service name from a type.

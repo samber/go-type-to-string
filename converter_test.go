@@ -30,6 +30,8 @@ func TestGetType(t *testing.T) {
 
 	// stdlib types
 	name = GetType[error]()
+	is.Equal("error", name)
+	name = GetType[*error]()
 	is.Equal("*error", name)
 
 	// simple types with pointer and slices
@@ -50,7 +52,7 @@ func TestGetType(t *testing.T) {
 	name = GetType[testStruct]()
 	is.Equal("github.com/samber/go-type-to-string.testStruct", name)
 	name = GetType[testInterface]()
-	is.Equal("*github.com/samber/go-type-to-string.testInterface", name)
+	is.Equal("github.com/samber/go-type-to-string.testInterface", name)
 
 	// structs and interfaces with pointer and slices
 	name = GetType[[]testStruct]()
@@ -150,6 +152,22 @@ func TestGetType(t *testing.T) {
 	// all mixed
 	name = GetType[[]chan *[]*map[*testStruct][]map[chan int]*map[testInterface]func(int, string) bool]()
 	is.Equal("[]chan *[]*map[*github.com/samber/go-type-to-string.testStruct][]map[chan int]*map[github.com/samber/go-type-to-string.testInterface]func(int, string) bool", name)
+}
+
+func TestGetValueType(t *testing.T) {
+	is := assert.New(t)
+
+	var a any
+	name := GetValueType(a)
+	is.Equal("interface {}", name)
+
+	a = ""
+	name = GetValueType(a)
+	is.Equal("interface {}", name) // not string
+
+	a = ""
+	name = GetValueType(&a)
+	is.Equal("*interface {}", name)
 }
 
 func TestGetReflectValueType(t *testing.T) {
