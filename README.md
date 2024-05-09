@@ -42,6 +42,7 @@ Not supported (yet?):
 - structs in anonymous types
 - structs in function input or output 
 - structs in generic type
+- `any("foobar")` reported as `string` instead of `any` (see #2)
 
 ## Examples
 
@@ -104,7 +105,7 @@ func main() {
 
 ## 🤝 Contributing
 
-- Ping me on twitter [@samuelberthe](https://twitter.com/samuelberthe) (DMs, mentions, whatever :))
+- Ping me on Twitter [@samuelberthe](https://twitter.com/samuelberthe) (DMs, mentions, whatever :))
 - Fork the [project](https://github.com/samber/go-type-to-string)
 - Fix [open issues](https://github.com/samber/go-type-to-string/issues) or request new features
 

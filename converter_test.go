@@ -148,6 +148,8 @@ func TestGetType(t *testing.T) {
 	is.Equal("interface {}", name)
 	name = GetType[*any]()
 	is.Equal("*interface {}", name)
+	name = GetType[**any]()
+	is.Equal("**interface {}", name)
 
 	// all mixed
 	name = GetType[[]chan *[]*map[*testStruct][]map[chan int]*map[testInterface]func(int, string) bool]()
@@ -163,11 +165,18 @@ func TestGetValueType(t *testing.T) {
 
 	a = ""
 	name = GetValueType(a)
-	is.Equal("interface {}", name) // not string
+	is.Equal("interface {}", name) // not string ?
 
 	a = ""
 	name = GetValueType(&a)
 	is.Equal("*interface {}", name)
+
+	a = 42
+	name = GetValueType(a)
+	is.Equal("interface {}", name) // not int ?
+
+	name = GetValueType(any("42"))
+	is.Equal("interface {}", name) // not string ?
 }
 
 func TestGetReflectValueType(t *testing.T) {
