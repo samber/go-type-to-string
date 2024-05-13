@@ -66,7 +66,7 @@ type testGeneric[T any] struct{ t T }
 | `testStruct`                                 | `github.com/samber/example.testStruct`                                                           |
 | `*testStruct`                                | `*github.com/samber/example.testStruct`                                                          |
 | `***testStruct`                              | `***github.com/samber/example.testStruct`                                                        |
-| `[][]***testStruct`                          | `[][]***github.com/samber/example.testStruct`                                                    |
+| `[][3]***testStruct`                         | `[][3]***github.com/samber/example.testStruct`                                                   |
 | `testGeneric[string]`                        | `github.com/samber/example.testGeneric[string]`                                                  |
 | `*map[testStruct]chan<- testGeneric[string]` | `*map[github.com/samber/example.testStruct]chan<- github.com/samber/example.testGeneric[string]` |
 
