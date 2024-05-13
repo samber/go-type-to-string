@@ -28,8 +28,10 @@ func getType(typeOfT reflect.Type) string {
 	switch typeOfT.Kind() {
 	case reflect.Pointer:
 		return "*" + getType(typeOfT.Elem())
-	case reflect.Slice, reflect.Array:
+	case reflect.Slice:
 		return "[]" + getType(typeOfT.Elem())
+	case reflect.Array:
+		return fmt.Sprintf("[%d]%s", typeOfT.Len(), getType(typeOfT.Elem()))
 	case reflect.Map:
 		key := getType(typeOfT.Key())
 		value := getType(typeOfT.Elem())
