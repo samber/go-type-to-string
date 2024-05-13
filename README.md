@@ -38,11 +38,11 @@ This library supports:
 - generics
 - anonymous types
 
-Not supported (yet?):
+Known limitations:
 - structs in anonymous types
 - structs in function input or output 
 - structs in generic type
-- `any("foobar")` reported as `string` instead of `any` (see #2)
+- `any("foobar")` is currently reported as `any` instead of `string` (see [#2](https://github.com/samber/go-type-to-string/issues/2))
 
 ## Examples
 
