@@ -107,6 +107,14 @@ func TestGetType(t *testing.T) {
 	name = GetType[*[]*map[*testStruct][]map[int]*testInterface]()
 	is.Equal("*[]*map[*github.com/samber/go-type-to-string.testStruct][]map[int]*github.com/samber/go-type-to-string.testInterface", name)
 
+	// arrays
+	name = GetType[[1]int]()
+	is.Equal("[1]int", name)
+	name = GetType[[2]*int]()
+	is.Equal("[2]*int", name)
+	name = GetType[[3]*[4]testStruct]()
+	is.Equal("[3]*[4]github.com/samber/go-type-to-string.testStruct", name)
+
 	// channels
 	name = GetType[chan int]()
 	is.Equal("chan int", name)
