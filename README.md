@@ -96,10 +96,10 @@ type Example struct{
 
 func main() {
     name1 := converter.GetType[*Example]()
-    fmt.Println("must print \"*github.com/samber/example.Example\":", name1)
+    // "*github.com/samber/example.Example"
 
     name2 := converter.GetValueType(Example{})
-    fmt.Println("must print \"github.com/samber/example.Example\":", name2)
+    // "github.com/samber/example.Example"
 }
 ```
 
