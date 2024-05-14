@@ -177,6 +177,10 @@ func TestGetType(t *testing.T) {
 	type aught interface{}
 	is.Equal("github.com/samber/go-type-to-string.aught", GetType[aught]())
 
+	is.Equal("*github.com/samber/go-type-to-string.ptr", GetType[*ptr]())
+	is.Equal("[]github.com/samber/go-type-to-string.ptr", GetType[[]ptr]())
+	is.Equal("chan<- github.com/samber/go-type-to-string.ptr", GetType[chan<- ptr]())
+
 	// all mixed
 	name = GetType[[]chan *[]*map[*testStruct][]map[chan int]*map[testInterface]func(int, string) bool]()
 	is.Equal("[]chan *[]*map[*github.com/samber/go-type-to-string.testStruct][]map[chan int]*map[github.com/samber/go-type-to-string.testInterface]func(int, string) bool", name)
@@ -203,6 +207,14 @@ func TestGetValueType(t *testing.T) {
 
 	name = GetValueType(any("42"))
 	is.Equal("interface {}", name) // not string ?
+
+	name = GetValueType(TestGetValueType)
+	is.Equal("func(*testing.T)", name)
+
+	type fn func(int) string
+	var testFn fn = func(int) string { return "" }
+	name = GetValueType(testFn)
+	is.Equal("github.com/samber/go-type-to-string.fn", name)
 }
 
 func TestGetReflectValueType(t *testing.T) {
