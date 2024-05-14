@@ -159,6 +159,24 @@ func TestGetType(t *testing.T) {
 	name = GetType[**any]()
 	is.Equal("**interface {}", name)
 
+	// named types
+	type ptr *any
+	is.Equal("github.com/samber/go-type-to-string.ptr", GetType[ptr]())
+	type slice []any
+	is.Equal("github.com/samber/go-type-to-string.slice", GetType[slice]())
+	type array [0]any
+	is.Equal("github.com/samber/go-type-to-string.array", GetType[array]())
+	type set map[any]struct{}
+	is.Equal("github.com/samber/go-type-to-string.set", GetType[set]())
+	type channel chan any
+	is.Equal("github.com/samber/go-type-to-string.channel", GetType[channel]())
+	type function func()
+	is.Equal("github.com/samber/go-type-to-string.function", GetType[function]())
+	type empty struct{}
+	is.Equal("github.com/samber/go-type-to-string.empty", GetType[empty]())
+	type aught interface{}
+	is.Equal("github.com/samber/go-type-to-string.aught", GetType[aught]())
+
 	// all mixed
 	name = GetType[[]chan *[]*map[*testStruct][]map[chan int]*map[testInterface]func(int, string) bool]()
 	is.Equal("[]chan *[]*map[*github.com/samber/go-type-to-string.testStruct][]map[chan int]*map[github.com/samber/go-type-to-string.testInterface]func(int, string) bool", name)
