@@ -37,6 +37,7 @@ This library supports:
 - channels
 - generics
 - anonymous types
+- named types
 
 Known limitations:
 - structs in anonymous types
@@ -53,6 +54,7 @@ package example
 
 type testStruct struct{}
 type testGeneric[T any] struct{ t T }
+type testNamedType testStruct
 ```
 
 | Type                                         | Exported                                                                                         |
@@ -66,6 +68,7 @@ type testGeneric[T any] struct{ t T }
 | `testStruct`                                 | `github.com/samber/example.testStruct`                                                           |
 | `*testStruct`                                | `*github.com/samber/example.testStruct`                                                          |
 | `***testStruct`                              | `***github.com/samber/example.testStruct`                                                        |
+| `***testNamedType`                           | `***github.com/samber/example.testNamedType`                                                     |
 | `[][3]***testStruct`                         | `[][3]***github.com/samber/example.testStruct`                                                   |
 | `testGeneric[string]`                        | `github.com/samber/example.testGeneric[string]`                                                  |
 | `*map[testStruct]chan<- testGeneric[string]` | `*map[github.com/samber/example.testStruct]chan<- github.com/samber/example.testGeneric[string]` |
