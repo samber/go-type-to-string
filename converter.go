@@ -3,6 +3,7 @@ package typetostring
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 func GetType[T any]() string {
@@ -61,10 +62,31 @@ func getType(typeOfT reflect.Type) string {
 
 		return fmt.Sprintf("%s %s", prefix, getType(typeOfT.Elem()))
 	case reflect.Func:
-		// @TODO: handle arguments and returned types recursively
+		numIn := typeOfT.NumIn()
+		in := make([]string, numIn)
 
-		return typeOfT.String()
+		if typeOfT.IsVariadic() { // ... instead []
+			numIn--
+			in[numIn] = "..." + getType(typeOfT.In(numIn).Elem())
+		}
 
+		for i := range in[:numIn] {
+			in[i] = getType(typeOfT.In(i))
+		}
+
+		out := make([]string, typeOfT.NumOut())
+		for i := range out {
+			out[i] = getType(typeOfT.Out(i))
+		}
+
+		switch in := strings.Join(in, ", "); len(out) {
+		case 0:
+			return fmt.Sprintf("func(%s)", in)
+		case 1:
+			return fmt.Sprintf("func(%s) %s", in, out[0])
+		default:
+			return fmt.Sprintf("func(%s) (%s)", in, strings.Join(out, ", "))
+		}
 	default:
 		// any + interface{} + anonymous type
 		return typeOfT.String()
