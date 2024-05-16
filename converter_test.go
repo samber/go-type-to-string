@@ -130,15 +130,22 @@ func TestGetType(t *testing.T) {
 	is.Equal("chan *[]*map[*github.com/samber/go-type-to-string.testStruct][]map[chan int]*github.com/samber/go-type-to-string.testInterface", name)
 
 	// functions
-	name = GetValueType(testFunc1)
+	name = GetType[func()]()
 	is.Equal("func()", name)
-	name = GetValueType(testFunc2)
-	is.Equal("func(string, assert.TestingT) bool", name)
-	name = GetValueType(testFunc3)
+	name = GetType[func(string, assert.TestingT) bool]()
+	is.Equal("func(string, github.com/stretchr/testify/assert.TestingT) bool", name)
+	name = GetType[func(...string)]()
 	is.Equal("func(...string)", name)
-	// @TODO: fix this
-	// name = GetValueType(func() *testStruct { return nil })
-	// is.Equal("func() *github.com/samber/go-type-to-string.testStruct", name)
+	name = GetType[func(int, ...string) int]()
+	is.Equal("func(int, ...string) int", name)
+	name = GetType[func(int, ...**testStruct) (string, *int)]()
+	is.Equal("func(int, ...**github.com/samber/go-type-to-string.testStruct) (string, *int)", name)
+	name = GetType[func() *testStruct]()
+	is.Equal("func() *github.com/samber/go-type-to-string.testStruct", name)
+	name = GetType[func(func(assert.TestingT) *func(...string)) *func() *func()]()
+	is.Equal("func(func(github.com/stretchr/testify/assert.TestingT) *func(...string)) *func() *func()", name)
+	name = GetType[func() *[]*func(...string) *func() (int, *testStruct)]()
+	is.Equal("func() *[]*func(...string) *func() (int, *github.com/samber/go-type-to-string.testStruct)", name)
 
 	// anonymous types
 	name = GetType[func()]()
@@ -215,6 +222,14 @@ func TestGetValueType(t *testing.T) {
 	var testFn fn = func(int) string { return "" }
 	name = GetValueType(testFn)
 	is.Equal("github.com/samber/go-type-to-string.fn", name)
+
+	// functions
+	name = GetValueType(testFunc1)
+	is.Equal("func()", name)
+	name = GetValueType(testFunc2)
+	is.Equal("func(string, github.com/stretchr/testify/assert.TestingT) bool", name)
+	name = GetValueType(testFunc3)
+	is.Equal("func(...string)", name)
 }
 
 func TestGetReflectValueType(t *testing.T) {
@@ -232,7 +247,7 @@ func TestGetReflectValueType(t *testing.T) {
 	name = GetReflectValueType(reflect.ValueOf(testStruct{}))
 	is.Equal("github.com/samber/go-type-to-string.testStruct", name)
 	name = GetReflectValueType(reflect.ValueOf(testFunc2))
-	is.Equal("func(string, assert.TestingT) bool", name)
+	is.Equal("func(string, github.com/stretchr/testify/assert.TestingT) bool", name)
 
 	// @TODO: missing tests
 }
