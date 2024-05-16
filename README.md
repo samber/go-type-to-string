@@ -30,6 +30,8 @@ This library supports:
 - primitive types
 - pointers
 - structs
+- functions with input and output
+- vaargs
 - interfaces
 - maps
 - arrays
@@ -41,7 +43,6 @@ This library supports:
 
 Known limitations:
 - structs in anonymous types
-- structs in function input or output 
 - structs in generic type
 - `any("foobar")` is currently reported as `any` instead of `string` (see [#2](https://github.com/samber/go-type-to-string/issues/2))
 
@@ -64,7 +65,7 @@ type testNamedType testStruct
 | `**[]*int`                                   | `**[]*int`                                                                                       |
 | `**[]*map[int]bool`                          | `**[]*map[int]bool`                                                                              |
 | `func (a string, b bool) int`                | `func (string, bool) int`                                                                        |
-| `func(...string)`                            | `func(...string)`                                                                                |
+| `func(int, ...string) (bool, error)`         | `func(int, ...string) (bool, error)`                                                             |
 | `testStruct`                                 | `github.com/samber/example.testStruct`                                                           |
 | `*testStruct`                                | `*github.com/samber/example.testStruct`                                                          |
 | `***testStruct`                              | `***github.com/samber/example.testStruct`                                                        |
