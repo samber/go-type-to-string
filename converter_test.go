@@ -2,6 +2,8 @@ package typetostring
 
 import (
 	"reflect"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -94,11 +96,43 @@ func Test(t *testing.T) {
 		t, "***github.com/samber/go-type-to-string.testInterface")
 
 	// generic types
-	check[testGen[int]](false,
-		t, "github.com/samber/go-type-to-string.testGen[int]")
-	// @TODO: fix this
-	// check[testGen[testGen[int]]](false,
-	// 	t, "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testGen[int]]")
+	check[testGen[int]](false, t, "github.com/samber/go-type-to-string.testGen[int]")
+	check[testGen[testing.T]](false, t, "github.com/samber/go-type-to-string.testGen[testing.T]")
+	check[testGen[testing.B]](false, t, "github.com/samber/go-type-to-string.testGen[testing.B]")
+	check[testGen[assert.Assertions]](false, t, "github.com/samber/go-type-to-string.testGen[github.com/stretchr/testify/assert.Assertions]")
+	check[testGen[func(assert.Assertions)]](false, t, "github.com/samber/go-type-to-string.testGen[func(github.com/stretchr/testify/assert.Assertions)]")
+	check[testGen[func(testing.T, ...assert.Assertions)]](false, t, "github.com/samber/go-type-to-string.testGen[func(testing.T, ...github.com/stretchr/testify/assert.Assertions)]")
+
+	{ // generic with nested local types
+		type testInt int
+		var expected struct{ testStruct, testInterface, testGenInt, testInt string }
+
+		switch strings.Join(strings.Split(runtime.Version(), ".")[:2], ".") {
+		case "go1.18":
+			expected.testStruct = "github.com/samber/go-type-to-string.testGen[typetostring.testStruct·1]"
+			expected.testInterface = "github.com/samber/go-type-to-string.testGen[typetostring.testInterface·2]"
+			expected.testGenInt = "github.com/samber/go-type-to-string.testGen[typetostring.testGen[int]]"
+			expected.testInt = "github.com/samber/go-type-to-string.testGen[typetostring.testInt·4]"
+		case "go1.19":
+			expected.testStruct = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testStruct·1]"       // as 1.20
+			expected.testInterface = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testInterface·2]" // as 1.20
+			expected.testGenInt = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testGen[int]]"       // no `·3]` for local generic type
+			expected.testInt = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testInt·4]"             // as 1.20
+		default: // go1.20 and later
+			expected.testStruct = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testStruct·1]"
+			expected.testInterface = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testInterface·2]"
+			expected.testGenInt = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testGen[int]·3]"
+			expected.testInt = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testInt·4]"
+
+			check[testGen[testGen[testInterface]]](false,
+				t, "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testInterface·2]·3]")
+		}
+
+		check[testGen[testStruct]](false, t, expected.testStruct)
+		check[testGen[testInterface]](false, t, expected.testInterface)
+		check[testGen[testGen[int]]](false, t, expected.testGenInt)
+		check[testGen[testInt]](false, t, expected.testInt)
+	}
 
 	// generic types with pointer and slices
 	check[[]testGen[int]](false,
