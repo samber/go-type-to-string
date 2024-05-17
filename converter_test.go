@@ -2,252 +2,272 @@ package typetostring
 
 import (
 	"reflect"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func testFunc1()                             {}              //nolint:unused
-func testFunc2(string, assert.TestingT) bool { return true } //nolint:unused
-func testFunc3(...string)                    {}              //nolint:unused
+func check[T any](equalReflectString bool, t *testing.T, expected string) {
+	t.Helper()
 
-func TestGetType(t *testing.T) {
-	is := assert.New(t)
+	assert.Equal(t, expected, GetType[T](), "GetType")
 
+	var v T
+	assert.Equal(t, expected, GetValueType(v), "GetValueType")
+
+	reflectType := reflect.TypeOf(&v).Elem()
+	assert.Equal(t, expected, GetReflectType(reflectType), "GetReflectType")
+
+	reflectValue := reflect.ValueOf(&v).Elem()
+	assert.Equal(t, expected, GetReflectValueType(reflectValue), "GetReflectValueType")
+
+	checkReflectString := assert.NotEqual
+
+	if equalReflectString {
+		checkReflectString = assert.Equal
+	}
+
+	checkReflectString(t, expected, reflectType.String(), "equalReflectString")
+}
+
+func Test(t *testing.T) {
 	type testStruct struct{}          //nolint:unused
 	type testInterface interface{}    //nolint:unused
 	type testGen[T any] struct{ t T } //nolint:unused
 
 	// simple types
-	name := GetType[int]()
-	is.Equal("int", name)
-	name = GetType[string]()
-	is.Equal("string", name)
-	name = GetType[complex128]()
-	is.Equal("complex128", name)
-	name = GetType[uint32]()
-	is.Equal("uint32", name)
+	check[int](true,
+		t, "int")
+	check[string](true,
+		t, "string")
+	check[complex128](true,
+		t, "complex128")
+	check[uint32](true,
+		t, "uint32")
+	check[rune](true,
+		t, "int32")
 
 	// stdlib types
-	name = GetType[error]()
-	is.Equal("error", name)
-	name = GetType[*error]()
-	is.Equal("*error", name)
+	check[error](true,
+		t, "error")
+	check[*error](true,
+		t, "*error")
 
 	// simple types with pointer and slices
-	name = GetType[[]int]()
-	is.Equal("[]int", name)
-	name = GetType[*int]()
-	is.Equal("*int", name)
-	name = GetType[*[]int]()
-	is.Equal("*[]int", name)
-	name = GetType[[]*int]()
-	is.Equal("[]*int", name)
-	name = GetType[*[]*int]()
-	is.Equal("*[]*int", name)
-	name = GetType[*[]*[]**int]()
-	is.Equal("*[]*[]**int", name)
+	check[[]int](true,
+		t, "[]int")
+	check[*int](true,
+		t, "*int")
+	check[*[]int](true,
+		t, "*[]int")
+	check[[]*int](true,
+		t, "[]*int")
+	check[*[]*int](true,
+		t, "*[]*int")
+	check[*[]*[]**int](true,
+		t, "*[]*[]**int")
 
 	// structs and interfaces
-	name = GetType[testStruct]()
-	is.Equal("github.com/samber/go-type-to-string.testStruct", name)
-	name = GetType[testInterface]()
-	is.Equal("github.com/samber/go-type-to-string.testInterface", name)
+	check[testStruct](false,
+		t, "github.com/samber/go-type-to-string.testStruct")
+	check[testInterface](false,
+		t, "github.com/samber/go-type-to-string.testInterface")
 
 	// structs and interfaces with pointer and slices
-	name = GetType[[]testStruct]()
-	is.Equal("[]github.com/samber/go-type-to-string.testStruct", name)
-	name = GetType[*testStruct]()
-	is.Equal("*github.com/samber/go-type-to-string.testStruct", name)
-	name = GetType[*[]testStruct]()
-	is.Equal("*[]github.com/samber/go-type-to-string.testStruct", name)
-	name = GetType[[]*testStruct]()
-	is.Equal("[]*github.com/samber/go-type-to-string.testStruct", name)
-	name = GetType[*[]*testStruct]()
-	is.Equal("*[]*github.com/samber/go-type-to-string.testStruct", name)
-	name = GetType[*[]*[]**testStruct]()
-	is.Equal("*[]*[]**github.com/samber/go-type-to-string.testStruct", name)
-	name = GetType[***testStruct]()
-	is.Equal("***github.com/samber/go-type-to-string.testStruct", name)
-	name = GetType[*testInterface]()
-	is.Equal("*github.com/samber/go-type-to-string.testInterface", name)
-	name = GetType[***testInterface]()
-	is.Equal("***github.com/samber/go-type-to-string.testInterface", name)
+	check[[]testStruct](false,
+		t, "[]github.com/samber/go-type-to-string.testStruct")
+	check[*testStruct](false,
+		t, "*github.com/samber/go-type-to-string.testStruct")
+	check[*[]testStruct](false,
+		t, "*[]github.com/samber/go-type-to-string.testStruct")
+	check[[]*testStruct](false,
+		t, "[]*github.com/samber/go-type-to-string.testStruct")
+	check[*[]*testStruct](false,
+		t, "*[]*github.com/samber/go-type-to-string.testStruct")
+	check[*[]*[]**testStruct](false,
+		t, "*[]*[]**github.com/samber/go-type-to-string.testStruct")
+	check[***testStruct](false,
+		t, "***github.com/samber/go-type-to-string.testStruct")
+	check[*testInterface](false,
+		t, "*github.com/samber/go-type-to-string.testInterface")
+	check[***testInterface](false,
+		t, "***github.com/samber/go-type-to-string.testInterface")
 
 	// generic types
-	name = GetType[testGen[int]]()
-	is.Equal("github.com/samber/go-type-to-string.testGen[int]", name)
-	// @TODO: fix this
-	// name = GetType[testGen[testGen[int]]]()
-	// is.Equal("github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testGen[int]]", name)
+	check[testGen[int]](false, t, "github.com/samber/go-type-to-string.testGen[int]")
+	check[testGen[testing.T]](false, t, "github.com/samber/go-type-to-string.testGen[testing.T]")
+	check[testGen[testing.B]](false, t, "github.com/samber/go-type-to-string.testGen[testing.B]")
+	check[testGen[assert.Assertions]](false, t, "github.com/samber/go-type-to-string.testGen[github.com/stretchr/testify/assert.Assertions]")
+	check[testGen[func(assert.Assertions)]](false, t, "github.com/samber/go-type-to-string.testGen[func(github.com/stretchr/testify/assert.Assertions)]")
+	check[testGen[func(testing.T, ...assert.Assertions)]](false, t, "github.com/samber/go-type-to-string.testGen[func(testing.T, ...github.com/stretchr/testify/assert.Assertions)]")
+
+	{ // generic with nested local types
+		type testInt int
+		var expected struct{ testStruct, testInterface, testGenInt, testInt string }
+
+		switch strings.Join(strings.Split(runtime.Version(), ".")[:2], ".") {
+		case "go1.18":
+			expected.testStruct = "github.com/samber/go-type-to-string.testGen[typetostring.testStruct·1]"
+			expected.testInterface = "github.com/samber/go-type-to-string.testGen[typetostring.testInterface·2]"
+			expected.testGenInt = "github.com/samber/go-type-to-string.testGen[typetostring.testGen[int]]"
+			expected.testInt = "github.com/samber/go-type-to-string.testGen[typetostring.testInt·4]"
+		case "go1.19":
+			expected.testStruct = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testStruct·1]"       // as 1.20
+			expected.testInterface = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testInterface·2]" // as 1.20
+			expected.testGenInt = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testGen[int]]"       // no `·3]` for local generic type
+			expected.testInt = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testInt·4]"             // as 1.20
+		default: // go1.20 and later
+			expected.testStruct = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testStruct·1]"
+			expected.testInterface = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testInterface·2]"
+			expected.testGenInt = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testGen[int]·3]"
+			expected.testInt = "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testInt·4]"
+
+			check[testGen[testGen[testInterface]]](false,
+				t, "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testInterface·2]·3]")
+		}
+
+		check[testGen[testStruct]](false, t, expected.testStruct)
+		check[testGen[testInterface]](false, t, expected.testInterface)
+		check[testGen[testGen[int]]](false, t, expected.testGenInt)
+		check[testGen[testInt]](false, t, expected.testInt)
+	}
 
 	// generic types with pointer and slices
-	name = GetType[[]testGen[int]]()
-	is.Equal("[]github.com/samber/go-type-to-string.testGen[int]", name)
-	name = GetType[*testGen[int]]()
-	is.Equal("*github.com/samber/go-type-to-string.testGen[int]", name)
-	name = GetType[*[]testGen[int]]()
-	is.Equal("*[]github.com/samber/go-type-to-string.testGen[int]", name)
-	name = GetType[[]*testGen[int]]()
-	is.Equal("[]*github.com/samber/go-type-to-string.testGen[int]", name)
-	name = GetType[*[]*testGen[int]]()
-	is.Equal("*[]*github.com/samber/go-type-to-string.testGen[int]", name)
-	name = GetType[*[]*[]**testGen[int]]()
-	is.Equal("*[]*[]**github.com/samber/go-type-to-string.testGen[int]", name)
+	check[[]testGen[int]](false,
+		t, "[]github.com/samber/go-type-to-string.testGen[int]")
+	check[*testGen[int]](false,
+		t, "*github.com/samber/go-type-to-string.testGen[int]")
+	check[*[]testGen[int]](false,
+		t, "*[]github.com/samber/go-type-to-string.testGen[int]")
+	check[[]*testGen[int]](false,
+		t, "[]*github.com/samber/go-type-to-string.testGen[int]")
+	check[*[]*testGen[int]](false,
+		t, "*[]*github.com/samber/go-type-to-string.testGen[int]")
+	check[*[]*[]**testGen[int]](false,
+		t, "*[]*[]**github.com/samber/go-type-to-string.testGen[int]")
 
 	// maps
-	name = GetType[map[string]int]()
-	is.Equal("map[string]int", name)
-	name = GetType[map[*string]int]()
-	is.Equal("map[*string]int", name)
-	name = GetType[*map[string]int]()
-	is.Equal("*map[string]int", name)
-	name = GetType[*[]*map[*testStruct]testInterface]()
-	is.Equal("*[]*map[*github.com/samber/go-type-to-string.testStruct]github.com/samber/go-type-to-string.testInterface", name)
-	name = GetType[*[]*map[*testStruct][]map[int]*testInterface]()
-	is.Equal("*[]*map[*github.com/samber/go-type-to-string.testStruct][]map[int]*github.com/samber/go-type-to-string.testInterface", name)
+	check[map[string]int](true,
+		t, "map[string]int")
+	check[map[*string]int](true,
+		t, "map[*string]int")
+	check[*map[string]int](true,
+		t, "*map[string]int")
+	check[*[]*map[*testStruct]testInterface](false,
+		t, "*[]*map[*github.com/samber/go-type-to-string.testStruct]github.com/samber/go-type-to-string.testInterface")
+	check[*[]*map[*testStruct][]map[int]*testInterface](false,
+		t, "*[]*map[*github.com/samber/go-type-to-string.testStruct][]map[int]*github.com/samber/go-type-to-string.testInterface")
 
 	// arrays
-	name = GetType[[1]int]()
-	is.Equal("[1]int", name)
-	name = GetType[[2]*int]()
-	is.Equal("[2]*int", name)
-	name = GetType[[3]*[4]testStruct]()
-	is.Equal("[3]*[4]github.com/samber/go-type-to-string.testStruct", name)
+	check[[1]int](true,
+		t, "[1]int")
+	check[[2]*int](true,
+		t, "[2]*int")
+	check[[3]*[4]testStruct](false,
+		t, "[3]*[4]github.com/samber/go-type-to-string.testStruct")
 
 	// channels
-	name = GetType[chan int]()
-	is.Equal("chan int", name)
-	name = GetType[<-chan int]()
-	is.Equal("<-chan int", name)
-	name = GetType[chan<- int]()
-	is.Equal("chan<- int", name)
-	name = GetType[chan testStruct]()
-	is.Equal("chan github.com/samber/go-type-to-string.testStruct", name)
-	name = GetType[chan testInterface]()
-	is.Equal("chan github.com/samber/go-type-to-string.testInterface", name)
-	name = GetType[chan *[]*map[*testStruct][]map[chan int]*testInterface]()
-	is.Equal("chan *[]*map[*github.com/samber/go-type-to-string.testStruct][]map[chan int]*github.com/samber/go-type-to-string.testInterface", name)
+	check[chan int](true,
+		t, "chan int")
+	check[<-chan int](true,
+		t, "<-chan int")
+	check[chan<- int](true,
+		t, "chan<- int")
+	check[chan testStruct](false,
+		t, "chan github.com/samber/go-type-to-string.testStruct")
+	check[chan testInterface](false,
+		t, "chan github.com/samber/go-type-to-string.testInterface")
+	check[chan *[]*map[*testStruct][]map[chan int]*testInterface](false,
+		t, "chan *[]*map[*github.com/samber/go-type-to-string.testStruct][]map[chan int]*github.com/samber/go-type-to-string.testInterface")
 
 	// functions
-	name = GetType[func()]()
-	is.Equal("func()", name)
-	name = GetType[func(string, assert.TestingT) bool]()
-	is.Equal("func(string, github.com/stretchr/testify/assert.TestingT) bool", name)
-	name = GetType[func(...string)]()
-	is.Equal("func(...string)", name)
-	name = GetType[func(int, ...string) int]()
-	is.Equal("func(int, ...string) int", name)
-	name = GetType[func(int, ...**testStruct) (string, *int)]()
-	is.Equal("func(int, ...**github.com/samber/go-type-to-string.testStruct) (string, *int)", name)
-	name = GetType[func() *testStruct]()
-	is.Equal("func() *github.com/samber/go-type-to-string.testStruct", name)
-	name = GetType[func(func(assert.TestingT) *func(...string)) *func() *func()]()
-	is.Equal("func(func(github.com/stretchr/testify/assert.TestingT) *func(...string)) *func() *func()", name)
-	name = GetType[func() *[]*func(...string) *func() (int, *testStruct)]()
-	is.Equal("func() *[]*func(...string) *func() (int, *github.com/samber/go-type-to-string.testStruct)", name)
+	check[func()](true,
+		t, "func()")
+	check[func(string, assert.TestingT) bool](false,
+		t, "func(string, github.com/stretchr/testify/assert.TestingT) bool")
+	check[func(...string)](true,
+		t, "func(...string)")
+	check[func(int, ...**testStruct) (string, *int)](false,
+		t, "func(int, ...**github.com/samber/go-type-to-string.testStruct) (string, *int)")
+	check[func() *testStruct](false,
+		t, "func() *github.com/samber/go-type-to-string.testStruct")
+	check[func(func(assert.TestingT) *func(...string)) *func() *func()](false,
+		t, "func(func(github.com/stretchr/testify/assert.TestingT) *func(...string)) *func() *func()")
+	check[func() *[]*func(...string) *func() (int, *testStruct)](false,
+		t, "func() *[]*func(...string) *func() (int, *github.com/samber/go-type-to-string.testStruct)")
+	check[func() *[]*func(...string) *func() (int, *func() *[]*func(...string) *func())](true,
+		t, "func() *[]*func(...string) *func() (int, *func() *[]*func(...string) *func())")
 
 	// anonymous types
-	name = GetType[func()]()
-	is.Equal("func()", name)
-	name = GetType[struct{ foo int }]()
-	is.Equal("struct { foo int }", name)
+	check[func()](true,
+		t, "func()")
+	check[struct{ foo int }](true,
+		t, "struct { foo int }")
 	// @TODO: fix this
-	// name = GetType[struct{ foo testStruct }]()
-	// is.Equal("struct { foo github.com/samber/go-type-to-string.testStruct }", name)
+	// check[struct{ foo testStruct }](false,
+	// 	t, "struct { foo github.com/samber/go-type-to-string.testStruct }")
 
 	// any
-	name = GetType[any]()
-	is.Equal("interface {}", name)
-	name = GetType[interface{}]()
-	is.Equal("interface {}", name)
-	name = GetType[*any]()
-	is.Equal("*interface {}", name)
-	name = GetType[**any]()
-	is.Equal("**interface {}", name)
+	check[any](true,
+		t, "interface {}")
+	check[interface{}](true,
+		t, "interface {}")
+	check[*any](true,
+		t, "*interface {}")
+	check[**any](true,
+		t, "**interface {}")
 
 	// named types
 	type ptr *any
-	is.Equal("github.com/samber/go-type-to-string.ptr", GetType[ptr]())
+	check[ptr](false, t, "github.com/samber/go-type-to-string.ptr")
 	type slice []any
-	is.Equal("github.com/samber/go-type-to-string.slice", GetType[slice]())
+	check[slice](false, t, "github.com/samber/go-type-to-string.slice")
 	type array [0]any
-	is.Equal("github.com/samber/go-type-to-string.array", GetType[array]())
+	check[array](false, t, "github.com/samber/go-type-to-string.array")
 	type set map[any]struct{}
-	is.Equal("github.com/samber/go-type-to-string.set", GetType[set]())
+	check[set](false, t, "github.com/samber/go-type-to-string.set")
 	type channel chan any
-	is.Equal("github.com/samber/go-type-to-string.channel", GetType[channel]())
+	check[channel](false, t, "github.com/samber/go-type-to-string.channel")
 	type function func()
-	is.Equal("github.com/samber/go-type-to-string.function", GetType[function]())
+	check[function](false, t, "github.com/samber/go-type-to-string.function")
 	type empty struct{}
-	is.Equal("github.com/samber/go-type-to-string.empty", GetType[empty]())
+	check[empty](false, t, "github.com/samber/go-type-to-string.empty")
 	type aught interface{}
-	is.Equal("github.com/samber/go-type-to-string.aught", GetType[aught]())
+	check[aught](false, t, "github.com/samber/go-type-to-string.aught")
 
-	is.Equal("*github.com/samber/go-type-to-string.ptr", GetType[*ptr]())
-	is.Equal("[]github.com/samber/go-type-to-string.ptr", GetType[[]ptr]())
-	is.Equal("chan<- github.com/samber/go-type-to-string.ptr", GetType[chan<- ptr]())
+	check[*ptr](false, t, "*github.com/samber/go-type-to-string.ptr")
+	check[[]ptr](false, t, "[]github.com/samber/go-type-to-string.ptr")
+	check[chan<- ptr](false, t, "chan<- github.com/samber/go-type-to-string.ptr")
 
 	// all mixed
-	name = GetType[[]chan *[]*map[*testStruct][]map[chan int]*map[testInterface]func(int, string) bool]()
-	is.Equal("[]chan *[]*map[*github.com/samber/go-type-to-string.testStruct][]map[chan int]*map[github.com/samber/go-type-to-string.testInterface]func(int, string) bool", name)
+	check[[]chan *[]*map[*testStruct][]map[chan int]*map[testInterface]func(int, string) bool](false,
+		t, "[]chan *[]*map[*github.com/samber/go-type-to-string.testStruct][]map[chan int]*map[github.com/samber/go-type-to-string.testInterface]func(int, string) bool")
+	check[[]chan *[]*map[*func()][]map[chan int]*map[struct{ int }]func(int, string) (bool, <-chan struct{})](true,
+		t, "[]chan *[]*map[*func()][]map[chan int]*map[struct { int }]func(int, string) (bool, <-chan struct {})")
+	check[[]chan *[10]*map[*func()][]map[chan int]*map[*func() <-chan func()]func(int, string) (bool, <-chan func(chan<- int))](true,
+		t, "[]chan *[10]*map[*func()][]map[chan int]*map[*func() <-chan func()]func(int, string) (bool, <-chan func(chan<- int))")
 }
 
 func TestGetValueType(t *testing.T) {
 	is := assert.New(t)
 
 	var a any
-	name := GetValueType(a)
-	is.Equal("interface {}", name)
+	is.Equal("interface {}", GetValueType(a))
 
 	a = ""
-	name = GetValueType(a)
-	is.Equal("interface {}", name) // not string ?
+	is.Equal("interface {}", GetValueType(a)) // not string ?
 
-	a = ""
-	name = GetValueType(&a)
-	is.Equal("*interface {}", name)
+	is.Equal("*interface {}", GetValueType(&a))
 
-	a = 42
-	name = GetValueType(a)
-	is.Equal("interface {}", name) // not int ?
+	var i interface{ f() }
+	a = i
+	is.Equal("interface {}", GetValueType(a)) // not interface{ f() } ?
 
-	name = GetValueType(any("42"))
-	is.Equal("interface {}", name) // not string ?
-
-	name = GetValueType(TestGetValueType)
-	is.Equal("func(*testing.T)", name)
-
-	type fn func(int) string
-	var testFn fn = func(int) string { return "" }
-	name = GetValueType(testFn)
-	is.Equal("github.com/samber/go-type-to-string.fn", name)
-
-	// functions
-	name = GetValueType(testFunc1)
-	is.Equal("func()", name)
-	name = GetValueType(testFunc2)
-	is.Equal("func(string, github.com/stretchr/testify/assert.TestingT) bool", name)
-	name = GetValueType(testFunc3)
-	is.Equal("func(...string)", name)
-}
-
-func TestGetReflectValueType(t *testing.T) {
-	is := assert.New(t)
-
-	type testStruct struct{}          //nolint:unused
-	type testInterface interface{}    //nolint:unused
-	type testGen[T any] struct{ t T } //nolint:unused
-
-	// random tests
-	name := GetReflectValueType(reflect.ValueOf(42))
-	is.Equal("int", name)
-	name = GetType[[]int]()
-	is.Equal("[]int", name)
-	name = GetReflectValueType(reflect.ValueOf(testStruct{}))
-	is.Equal("github.com/samber/go-type-to-string.testStruct", name)
-	name = GetReflectValueType(reflect.ValueOf(testFunc2))
-	is.Equal("func(string, github.com/stretchr/testify/assert.TestingT) bool", name)
-
-	// @TODO: missing tests
+	for _, v := range []any{
+		i, &a, 0, "", []any{}, [1]any{}, make(chan any), struct{}{},
+	} {
+		is.Equal("interface {}", GetValueType(v), reflect.TypeOf(v))
+	}
 }
