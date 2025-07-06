@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -159,6 +160,8 @@ func Test(t *testing.T) {
 		t, "*[]*map[*github.com/samber/go-type-to-string.testStruct]github.com/samber/go-type-to-string.testInterface")
 	check[*[]*map[*testStruct][]map[int]*testInterface](false,
 		t, "*[]*map[*github.com/samber/go-type-to-string.testStruct][]map[int]*github.com/samber/go-type-to-string.testInterface")
+	check[map[testStruct]int](false,
+		t, "map[github.com/samber/go-type-to-string.testStruct]int")
 
 	// arrays
 	check[[1]int](true,
@@ -206,7 +209,59 @@ func Test(t *testing.T) {
 	check[struct{ foo int }](true,
 		t, "struct { foo int }")
 	check[struct{ foo testStruct }](false,
- 		t, "struct { foo github.com/samber/go-type-to-string.testStruct }")
+		t, "struct { foo github.com/samber/go-type-to-string.testStruct }")
+	check[struct{ testStruct }](false,
+		t, "struct { github.com/samber/go-type-to-string.testStruct }")
+	check[func(struct{ foo testStruct })](false,
+		t, "func(struct { foo github.com/samber/go-type-to-string.testStruct })")
+	check[func(struct{ *testStruct })](false,
+		t, "func(struct { *github.com/samber/go-type-to-string.testStruct })")
+	check[chan struct{ foo testStruct }](false,
+		t, "chan struct { foo github.com/samber/go-type-to-string.testStruct }")
+	check[chan struct{ testStruct }](false,
+		t, "chan struct { github.com/samber/go-type-to-string.testStruct }")
+	check[struct {
+		foo int
+		testStruct
+	}](false,
+		t, "struct { foo int; github.com/samber/go-type-to-string.testStruct }")
+	check[func(...struct{ bar string })](true,
+		t, "func(...struct { bar string })")
+	check[struct{ foo struct{ bar int } }](true,
+		t, "struct { foo struct { bar int } }")
+	check[interface{ Do() string }](true,
+		t, "interface { Do() string }")
+	check[*interface{ Do() string }](true,
+		t, "*interface { Do() string }")
+	check[[]interface{ Do() string }](true,
+		t, "[]interface { Do() string }")
+	check[func() interface{ Do() string }](true,
+		t, "func() interface { Do() string }")
+	check[interface {
+		A() int
+		B() string
+	}](true,
+		t, "interface { A() int; B() string }")
+	check[interface {
+		A() int
+		interface{ B() string }
+	}](true,
+		t, "interface { A() int; B() string }")
+	check[struct {
+		foo int
+		bar struct{ baz string }
+	}](true,
+		t, "struct { foo int; bar struct { baz string } }")
+
+	// unsafe
+	check[unsafe.Pointer](true,
+		t, "unsafe.Pointer")
+	check[func(unsafe.Pointer)](true,
+		t, "func(unsafe.Pointer)")
+	check[struct{ p unsafe.Pointer }](true,
+		t, "struct { p unsafe.Pointer }")
+	check[interface{ P() unsafe.Pointer }](true,
+		t, "interface { P() unsafe.Pointer }")
 
 	// any
 	check[any](true,
@@ -239,6 +294,12 @@ func Test(t *testing.T) {
 	check[*ptr](false, t, "*github.com/samber/go-type-to-string.ptr")
 	check[[]ptr](false, t, "[]github.com/samber/go-type-to-string.ptr")
 	check[chan<- ptr](false, t, "chan<- github.com/samber/go-type-to-string.ptr")
+
+	// recursive types
+	type recursive struct {
+		r *recursive
+	}
+	check[recursive](false, t, "github.com/samber/go-type-to-string.recursive")
 
 	// all mixed
 	check[[]chan *[]*map[*testStruct][]map[chan int]*map[testInterface]func(int, string) bool](false,
