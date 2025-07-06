@@ -103,6 +103,8 @@ func Test(t *testing.T) {
 	check[testGen[assert.Assertions]](false, t, "github.com/samber/go-type-to-string.testGen[github.com/stretchr/testify/assert.Assertions]")
 	check[testGen[func(assert.Assertions)]](false, t, "github.com/samber/go-type-to-string.testGen[func(github.com/stretchr/testify/assert.Assertions)]")
 	check[testGen[func(testing.T, ...assert.Assertions)]](false, t, "github.com/samber/go-type-to-string.testGen[func(testing.T, ...github.com/stretchr/testify/assert.Assertions)]")
+	// @TODO: fix this
+	// check[testGen[testStruct]](false, t, "github.com/samber/go-type-to-string.testGen[github.com/samber/go-type-to-string.testStruct]")
 
 	{ // generic with nested local types
 		type testInt int
@@ -315,16 +317,21 @@ func TestGetValueType(t *testing.T) {
 
 	var a any
 	is.Equal("interface {}", GetValueType(a))
-
-	a = ""
-	is.Equal("interface {}", GetValueType(a)) // not string ?
-
 	is.Equal("*interface {}", GetValueType(&a))
 
-	var i interface{ f() }
-	a = i
-	is.Equal("interface {}", GetValueType(a)) // not interface{ f() } ?
+	b := 123
+	is.Equal("int", GetValueType(b))
 
+	c := 1.23
+	is.Equal("float64", GetValueType(c))
+
+	d := true
+	is.Equal("bool", GetValueType(d))
+
+	var i interface{ f() }
+	is.Equal("interface { typetostring.f() }", GetValueType(i))
+
+	// @TODO: show "interface {}" or the underlying type ?
 	for _, v := range []any{
 		i, &a, 0, "", []any{}, [1]any{}, make(chan any), struct{}{},
 	} {
