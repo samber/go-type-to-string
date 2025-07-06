@@ -299,7 +299,7 @@ func Test(t *testing.T) {
 
 	// recursive types
 	type recursive struct {
-		r *recursive
+		r *recursive //nolint:unused
 	}
 	check[recursive](false, t, "github.com/samber/go-type-to-string.recursive")
 
