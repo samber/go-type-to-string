@@ -87,6 +87,29 @@ func getType(typeOfT reflect.Type) string {
 		default:
 			return fmt.Sprintf("func(%s) (%s)", in, strings.Join(out, ", "))
 		}
+	case reflect.Struct:
+		var builder strings.Builder
+		builder.WriteString("struct {")
+
+		for i := 0; i < typeOfT.NumField(); i++ {
+			if i > 0 {
+				builder.WriteString(";")
+			}
+			builder.WriteString(" ")
+			field := typeOfT.Field(i)
+			if !field.Anonymous {
+				builder.WriteString(field.Name)
+				builder.WriteString(" ")
+			}
+			builder.WriteString(getType(field.Type))
+		}
+
+		if typeOfT.NumField() > 0 {
+			builder.WriteString(" ")
+		}
+
+		builder.WriteString("}")
+		return builder.String()
 	default:
 		// any + interface{} + anonymous type
 		return typeOfT.String()

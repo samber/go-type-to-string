@@ -205,9 +205,8 @@ func Test(t *testing.T) {
 		t, "func()")
 	check[struct{ foo int }](true,
 		t, "struct { foo int }")
-	// @TODO: fix this
-	// check[struct{ foo testStruct }](false,
-	// 	t, "struct { foo github.com/samber/go-type-to-string.testStruct }")
+	check[struct{ foo testStruct }](false,
+ 		t, "struct { foo github.com/samber/go-type-to-string.testStruct }")
 
 	// any
 	check[any](true,
