@@ -40,9 +40,10 @@ This library supports:
 - generics
 - anonymous types
 - named types
+- `unsafe.Pointer`
+- recursive types
 
 Known limitations:
-- structs in anonymous types
 - structs in generic type
 - `any("foobar")` is currently reported as `any` instead of `string` (see [#2](https://github.com/samber/go-type-to-string/issues/2))
 
